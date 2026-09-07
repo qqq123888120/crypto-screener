@@ -1,0 +1,26 @@
+name: EMA回踩筛选
+
+on:
+  schedule:
+    - cron: "5 0,4,8,12,16,20 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  run-screener:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 运行筛选脚本
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python screener.py
