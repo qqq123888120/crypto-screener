@@ -31,11 +31,17 @@ SLEEP_BETWEEN_REQUESTS = 0.25  # 避免触发币安接口限速
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
+# 币安接口会屏蔽美区IP(GitHub Actions服务器大多在美国机房)，
+# 需要一个代理来绕开限制。PROXY_URL 格式例如:
+# http://user:pass@host:port  或  http://host:port
+PROXY_URL = os.environ.get("PROXY_URL", "")
+PROXIES = {"http": PROXY_URL, "https": PROXY_URL} if PROXY_URL else None
+
 
 def get_usdt_perpetual_symbols():
     """获取所有 USDT 本位永续合约交易对"""
     url = f"{FUTURES_BASE}/fapi/v1/exchangeInfo"
-    resp = requests.get(url, timeout=10)
+    resp = requests.get(url, timeout=15, proxies=PROXIES)
     resp.raise_for_status()
     data = resp.json()
     symbols = []
@@ -51,7 +57,7 @@ def get_usdt_perpetual_symbols():
 
 def get_24h_ticker(symbol):
     url = f"{FUTURES_BASE}/fapi/v1/ticker/24hr"
-    resp = requests.get(url, params={"symbol": symbol}, timeout=10)
+    resp = requests.get(url, params={"symbol": symbol}, timeout=15, proxies=PROXIES)
     resp.raise_for_status()
     return resp.json()
 
@@ -59,7 +65,8 @@ def get_24h_ticker(symbol):
 def get_klines(symbol, interval=INTERVAL, limit=KLINE_LIMIT):
     url = f"{FUTURES_BASE}/fapi/v1/klines"
     resp = requests.get(
-        url, params={"symbol": symbol, "interval": interval, "limit": limit}, timeout=10
+        url, params={"symbol": symbol, "interval": interval, "limit": limit},
+        timeout=15, proxies=PROXIES,
     )
     resp.raise_for_status()
     raw = resp.json()
